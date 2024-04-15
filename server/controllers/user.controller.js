@@ -2,6 +2,8 @@ const asyncHandler = require('express-async-handler')
 const User = require('../models/user.model')
 const bcrypt = require('bcrypt')
 const generateToken = require('../utils/createToken')
+const sendEmail = require('../utils/senEmail')
+const crypto = require('crypto')
 
 module.exports.createUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body
@@ -44,6 +46,54 @@ module.exports.loginUser = asyncHandler(async (req, res) => {
     name: user.name,
     email: user.email,
     isAdmin: user.isAdmin,
+  })
+})
+
+module.exports.forgotPassword = asyncHandler(async (req, res) => {
+  const user = await User.findOne({ email: req.body.email })
+  if (!user) {
+    throw new Error('Email không tồn tại!')
+  }
+  const resetToken = user.getResetPasswordToken()
+  await user.save({ validateBeforeSave: false })
+  const resetPasswordUrl = `${process.env.CLIENT_URL}/reset/${resetToken}`
+  const html = `Link reset password của bạn là :<br/><br/> <a href=${resetPasswordUrl}>Click here</a> <br/><br/>Nếu bạn không yêu cầu reset password, hãy bỏ qua email này.`
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: `Reset password Hieu-Shop`,
+      html,
+    })
+    res.status(200).json({
+      success: true,
+      message: `Email gửi ${user.email} thành công`,
+    })
+  } catch (error) {
+    user.resetPasswordToken = undefined
+    user.resetPasswordExpire = undefined
+    await user.save({ validateBeforeSave: false })
+    throw new Error('Email không thể gửi')
+  }
+})
+
+module.exports.resetPassword = asyncHandler(async (req, res) => {
+  const resetPasswordToken = crypto.createHash('sha256').update(req.params.token).digest('hex')
+  const user = await User.findOne({
+    resetPasswordToken,
+    resetPasswordExpire: { $gt: Date.now() },
+  })
+  if (!user) {
+    throw new Error('Mã reset password không hợp lệ hoặc đã hết hạn')
+  }
+  const hashedPassword = await bcrypt.hash(req.body.password, 10)
+  user.password = hashedPassword
+  user.resetPasswordToken = undefined
+  user.resetPasswordExpire = undefined
+  await user.save()
+  generateToken(res, user._id)
+  return res.status(200).json({
+    success: user ? true : false,
+    mes: user ? 'Updated password' : 'Something went wrong',
   })
 })
 

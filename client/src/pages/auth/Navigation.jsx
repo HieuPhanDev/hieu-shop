@@ -7,29 +7,24 @@ import {
   AiOutlineShoppingCart,
   AiOutlineUserAdd,
 } from 'react-icons/ai'
+import { FaUserCircle } from 'react-icons/fa'
 import { FaHeart } from 'react-icons/fa'
 import path from '../../utils/path'
-import './Navigation.css'
 import { useDispatch, useSelector } from 'react-redux'
 import { useLogoutMutation } from '../../redux/api/userApiSlice'
 import { logout } from '../../redux/features/auth/authSlice'
 import FavoritesCount from '../product/FavoritesCount'
+function capitalizeFirstLetter(string) {
+  string = string.split(' ').pop()
+  return string.charAt(0).toUpperCase() + string.slice(1)
+}
 const Navigation = () => {
   const { userInfo } = useSelector((state) => state.auth)
-  // const { cartItems } = useSelector((state) => state.cart)
-
-  const [dropdownOpen, setDropdownOpen] = useState(false)
-  const [showSidebar, setShowSidebar] = useState(false)
-
-  const toggleDropdown = () => {
-    setDropdownOpen(!dropdownOpen)
-  }
-
+  const { cartItems } = useSelector((state) => state.cart)
+  const [show, setShow] = useState(false)
   const dispatch = useDispatch()
   const navigate = useNavigate()
-
   const [logoutApiCall] = useLogoutMutation()
-
   const logoutHandler = async () => {
     try {
       await logoutApiCall().unwrap()
@@ -40,140 +35,120 @@ const Navigation = () => {
     }
   }
   return (
-    <div
-      // style={{ zIndex: 9999 }}
-      className={`${
-        showSidebar ? 'hidden' : 'flex'
-      } xl:flex lg:flex md:hidden sm:hidden flex-col justify-between p-4 text-white bg-[#000] h-[100vh] hover:w-full`}
-      id="navigation-container"
-    >
-      <div className="flex flex-col justify-center space-y-4">
-        <Link to={path.DEFAULT} className="flex items-center transition-transform transform hover:translate-x-2">
-          <AiOutlineHome className="mr-2 mt-[3rem]" size={26} />
-          <span className="hidden nav-item-name mt-[3rem]">HOME</span>{' '}
+    <div className={`flex p-6 px-28 text-white bg-[#000] justify-between`}>
+      <div className="flex space-x-14 ">
+        <Link to={path.DEFAULT} className="flex items-center transition-transform transform hover:-translate-y-2">
+          <AiOutlineHome className="mr-2" size={26} />
+          <span>Trang Chủ</span>{' '}
         </Link>
-
-        <Link to={path.SHOP} className="flex items-center transition-transform transform hover:translate-x-2">
-          <AiOutlineShopping className="mr-2 mt-[3rem]" size={26} />
-          <span className="hidden nav-item-name mt-[3rem]">SHOP</span>{' '}
+        <Link to={path.SHOP} className="flex items-center transition-transform transform hover:-translate-y-2">
+          <AiOutlineShopping className="mr-2" size={26} />
+          <span>Shopping</span>{' '}
         </Link>
-
         <Link to={path.CART} className="flex relative">
-          <div className="flex items-center transition-transform transform hover:translate-x-2">
-            <AiOutlineShoppingCart className="mt-[3rem] mr-2" size={26} />
-            <span className="hidden nav-item-name mt-[3rem]">Cart</span>{' '}
+          <div className="flex items-center transition-transform transform hover:-translate-y-2">
+            <AiOutlineShoppingCart className="mr-2" size={26} />
+            <span>Giỏ Hàng</span>{' '}
           </div>
-
           <div className="absolute top-9">
-            {/* {cartItems.length > 0 && (
+            {cartItems.length > 0 && (
               <span>
                 <span className="px-1 py-0 text-sm text-white bg-pink-500 rounded-full">
                   {cartItems.reduce((a, c) => a + c.qty, 0)}
                 </span>
               </span>
-            )} */}
+            )}
           </div>
         </Link>
-
         <Link to={path.FAVORITE} className="flex relative">
-          <div className="flex justify-center items-center transition-transform transform hover:translate-x-2">
-            <FaHeart className="mt-[3rem] mr-2" size={20} />
-            <span className="hidden nav-item-name mt-[3rem]">Favorites</span> <FavoritesCount />
+          <div className="flex justify-center items-center transition-transform transform hover:-translate-y-2">
+            <FaHeart className="mr-2" size={20} />
+            <span>Yêu Thích</span> <FavoritesCount />
           </div>
         </Link>
       </div>
-
       <div className="relative">
-        <button onClick={toggleDropdown} className="flex items-center text-gray-800 focus:outline-none">
-          {userInfo ? <span className="text-white whitespace-nowrap">Hi {userInfo.name}!</span> : <></>}
-          {userInfo && (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className={`h-4 w-4 ml-1 ${dropdownOpen ? 'transform rotate-180' : ''}`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="white"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d={dropdownOpen ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'}
-              />
-            </svg>
-          )}
-        </button>
-
-        {dropdownOpen && userInfo && (
-          <ul
-            className={`absolute right-0 mt-2 mr-14 space-y-2 bg-white text-gray-600 ${
-              !userInfo.isAdmin ? '-top-20' : '-top-80'
-            } `}
-          >
-            {userInfo.isAdmin && (
-              <>
-                <li>
-                  <Link to="/admin/dashboard" className="block px-4 py-2 hover:bg-gray-100">
-                    Dashboard
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/admin/productlist" className="block px-4 py-2 hover:bg-gray-100">
-                    Products
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/admin/categorylist" className="block px-4 py-2 hover:bg-gray-100">
-                    Category
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/admin/orderlist" className="block px-4 py-2 hover:bg-gray-100">
-                    Orders
-                  </Link>
-                </li>
-                <li>
-                  <Link to={`${path.ADMIN}/${path.USERLIST}`} className="block px-4 py-2 hover:bg-gray-100">
-                    Users
-                  </Link>
-                </li>
-              </>
-            )}
-
-            <li>
-              <Link to="/profile" className="block px-4 py-2 hover:bg-gray-100">
-                Profile
-              </Link>
-            </li>
-            <li>
-              <button onClick={logoutHandler} className="block w-full px-4 py-2 text-left hover:bg-gray-100">
-                Logout
-              </button>
-            </li>
-          </ul>
-        )}
-        {!userInfo && (
-          <ul>
-            <li>
+        <div onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
+          <div className="relative items-center transition-transform transform hover:-translate-y-1 cursor-pointer mt-2 z-50">
+            <FaUserCircle className="mx-auto text-center" size={26} />
+            <span>{userInfo ? 'Hi ' + capitalizeFirstLetter(userInfo.name) + '!' : 'User'}</span>
+          </div>
+          {show && !userInfo && (
+            <div className="absolute flex flex-col border rounded-md p-4 bg-stone-900 border-slate-200 left-1/2 transform -translate-x-1/2 w-[150px]">
               <Link
                 to={path.LOGIN}
-                className="flex items-center mt-5 transition-transform transform hover:translate-x-2"
+                className="flex items-center pb-2 transition-transform transform hover:-translate-y-1"
               >
-                <AiOutlineLogin className="mr-2 mt-[4px]" size={26} />
-                <span className="hidden nav-item-name">LOGIN</span>
+                <span>Đăng Nhập</span>
+                <AiOutlineLogin className="ml-2" size={26} />
               </Link>
-            </li>
-            <li>
+              <hr />
               <Link
                 to={path.REGISTER}
-                className="flex items-center mt-5 transition-transform transform hover:translate-x-2"
+                className="flex items-center mt-2 transition-transform transform hover:-translate-y-1"
               >
-                <AiOutlineUserAdd size={26} />
-                <span className="hidden nav-item-name">REGISTER</span>
+                <span>Đăng Kí</span>
+                <AiOutlineUserAdd className="ml-2" size={26} />
               </Link>
-            </li>
-          </ul>
-        )}
+            </div>
+          )}
+          {show && userInfo && (
+            <div className="absolute flex flex-col border rounded-md p-4 bg-stone-900 border-slate-200 left-1/2 transform -translate-x-1/2 w-[150px]">
+              {userInfo.isAdmin && (
+                <>
+                  <Link
+                    to={path.DASHBOARD}
+                    className="flex items-center pb-2 transition-transform transform hover:-translate-y-1"
+                  >
+                    <span>Dashboard</span>
+                  </Link>
+                  <hr />
+                  <Link
+                    to="/admin/productlist"
+                    className="flex items-center mt-2 transition-transform transform hover:-translate-y-1 pb-2"
+                  >
+                    <span>Products</span>
+                  </Link>
+                  <hr />
+                  <Link
+                    to="/admin/categorylist"
+                    className="flex items-center mt-2 transition-transform transform hover:-translate-y-1 pb-2"
+                  >
+                    <span> Category</span>
+                  </Link>
+                  <hr />
+                  <Link
+                    to="/admin/orderlist"
+                    className="flex items-center mt-2 transition-transform transform hover:-translate-y-1 pb-2"
+                  >
+                    <span> Orders</span>
+                  </Link>
+                  <hr />
+                  <Link
+                    to={`${path.ADMIN}/${path.USERLIST}`}
+                    className="flex items-center mt-2 transition-transform transform hover:-translate-y-1 pb-2"
+                  >
+                    <span> Users</span>
+                  </Link>
+                  <hr />
+                </>
+              )}
+              <Link
+                to={path.PROFILE}
+                className="flex items-center mt-2 transition-transform transform hover:-translate-y-1 pb-2"
+              >
+                <span> Profile</span>
+              </Link>
+              <hr />
+              <button
+                onClick={logoutHandler}
+                className="flex items-center mt-2 transition-transform transform hover:-translate-y-1 pb-2"
+              >
+                <span> Đăng Xuất</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

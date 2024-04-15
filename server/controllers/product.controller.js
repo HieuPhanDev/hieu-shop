@@ -38,12 +38,10 @@ module.exports.getProducts = asyncHandler(async (req, res) => {
     const queryObj = { ...req.query }
     const excludedFields = ['page', 'sort', 'limit', 'fields']
     excludedFields.forEach((el) => delete queryObj[el])
-
     //1B) Advanced filtering
     let queryString = JSON.stringify(queryObj)
     queryString = queryString.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`)
     let query = Product.find(JSON.parse(queryString))
-
     // 2) Sorting
     if (req.query.sort) {
       const sortBy = req.query.sort.split(',').join(' ')
@@ -64,16 +62,19 @@ module.exports.getProducts = asyncHandler(async (req, res) => {
     // 4) Pagination
     // page=2&limit=10, 1-10 page 1, 11-20 page 2, 21-30 page 3
     const page = req.query.page * 1 || 1
-    const limit = req.query.limit * 1 || 10
+    const limit = req.query.limit * 1 || 8
     const skip = (page - 1) * limit
 
     query = query.skip(skip).limit(limit)
 
     //EXECUTE QUERY
     const response = await query
+    const totalItems = await Product.countDocuments(JSON.parse(queryString))
+    const totalPages = Math.ceil(totalItems / limit)
     res.status(200).json({
       status: 'success',
       results: response.length,
+      totalPages: totalPages,
       data: {
         response,
       },

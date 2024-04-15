@@ -6,6 +6,9 @@ const { authenticate, authorizeAdmin } = require('../middlewares/authMiddleware'
 router.route('/').post(userController.createUser).get(authenticate, authorizeAdmin, userController.getAllUsers)
 router.post('/auth', userController.loginUser)
 router.post('/logout', userController.logoutUser)
+router.route('/password/forgot').post(userController.forgotPassword)
+router.route('/password/reset/:token').put(userController.resetPassword)
+
 router
   .route('/profile')
   .get(authenticate, userController.getUserProfile)

@@ -18,6 +18,8 @@ import Favorites from './pages/product/Favorites'
 import ProductDetails from './pages/product/ProductDetails'
 import Cart from './pages/Cart'
 import Shop from './pages/Shop'
+import ForgotPassword from './pages/auth/ForgotPassword'
+import ResetPassword from './pages/auth/ResetPassword'
 
 function App() {
   return (
@@ -28,8 +30,11 @@ function App() {
           <Route path={path.LOGIN} element={<Login />} />
           <Route path={path.REGISTER} element={<Register />} />
           <Route path={path.FAVORITE} element={<Favorites />} />
-          <Route path="/cart" element={<Cart />} />
+          <Route path={path.CART} element={<Cart />} />
           <Route path={path.SHOP} element={<Shop />} />
+          <Route path={path.FORGOTPASSWORD} element={<ForgotPassword />} />
+          <Route path={path.RESETPASSWORD} element={<ResetPassword />} />
+
           <Route path="/product/:id" element={<ProductDetails />} />
           <Route path="" element={<Private />}>
             <Route path={path.PROFILE} element={<Profile />} />

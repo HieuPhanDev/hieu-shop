@@ -1,0 +1,5 @@
+###
+POST http://localhost:5003/api/insert/create
+
+###
+POST http://localhost:5003/api/insert/category

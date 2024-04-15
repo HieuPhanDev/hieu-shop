@@ -1,24 +1,21 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Loader from '../../components/Loader'
-import { useLoginMutation } from '../../redux/api/userApiSlice'
-import { setCredentials } from '../../redux/features/auth/authSlice'
+import { useForgotPasswordMutation } from '../../redux/api/userApiSlice'
 import { toast } from 'react-toastify'
-import { useDispatch, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 import path from '../../utils/path'
 import { Formik, Form, Field } from 'formik'
 import * as Yup from 'yup'
 
 const DisplayingError = Yup.object().shape({
   email: Yup.string().email('Email không đúng định dạng').required('Email không được để trống!'),
-  password: Yup.string().required('Password không được để trống!'),
 })
 
-const Login = () => {
-  const dispatch = useDispatch()
+const ForgotPassword = () => {
   const navigate = useNavigate()
 
-  const [login, { isLoading }] = useLoginMutation()
+  const [forgot, { isLoading }] = useForgotPasswordMutation()
   const { userInfo } = useSelector((state) => state.auth)
   useEffect(() => {
     if (userInfo) {
@@ -27,12 +24,11 @@ const Login = () => {
   }, [navigate, userInfo])
   const handleSubmit = async (values) => {
     try {
-      const res = await login(values).unwrap()
-      dispatch(setCredentials({ ...res }))
+      await forgot(values).unwrap()
       setTimeout(() => {
-        toast.success('Đăng nhập thành công')
+        toast.success('Gửi mã xác nhận thành công! Vui lòng kiểm tra email của bạn')
       }, 100)
-      navigate('/')
+      navigate(path.LOGIN)
     } catch (error) {
       toast.error(error?.data?.message || error.error)
     }
@@ -40,11 +36,10 @@ const Login = () => {
 
   return (
     <div className="mr-[4rem] py-20 px-72">
-      <h1 className="text-2xl font-semibold mb-4">Đăng Nhập</h1>
+      <h1 className="text-2xl font-semibold mb-4">Nhập Email</h1>
       <Formik
         initialValues={{
           email: '',
-          password: '',
         }}
         validationSchema={DisplayingError}
         onSubmit={(values) => handleSubmit(values)}
@@ -66,29 +61,12 @@ const Login = () => {
                 <div className="text-xs text-red-500 absolute mt-1">{errors.email}</div>
               )}
             </div>
-
-            <div className="mb-4">
-              <label htmlFor="password" className="block text-sm font-medium text-white">
-                Password
-              </label>
-              <Field
-                type="password"
-                id="password"
-                name="password"
-                className="mt-1 p-2 border rounded w-full"
-                placeholder="Nhập password"
-              />
-              {touched.password && errors.password && (
-                <div className="text-xs text-red-500 absolute mt-1">{errors.password}</div>
-              )}
-            </div>
-
             <button
               disabled={isLoading}
               type="submit"
               className="bg-pink-500 text-white px-4 py-2 rounded cursor-pointer my-[1rem]"
             >
-              {isLoading ? 'Đăng Nhập...' : 'Đăng Nhập'}
+              {isLoading ? 'Gửi mail...' : 'Gửi mail'}
             </button>
 
             {isLoading && <Loader />}
@@ -112,4 +90,4 @@ const Login = () => {
   )
 }
 
-export default Login
+export default ForgotPassword

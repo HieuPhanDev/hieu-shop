@@ -34,6 +34,12 @@ export const userApiSlice = createApi({
       }),
       keepUnusedDataFor: 5,
     }),
+    forgotPassword: builder.mutation({
+      query: (data) => ({ url: `${USERS_URL}/password/forgot`, method: 'POST', body: data }),
+    }),
+    resetPassword: builder.mutation({
+      query: ({ token, data }) => ({ url: `${USERS_URL}/password/reset/${token}`, method: 'PUT', body: data }),
+    }),
   }),
 })
 export const {
@@ -45,4 +51,6 @@ export const {
   useUpdateUserMutation,
   useDeleteUserMutation,
   useGetUserDetailsQuery,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
 } = userApiSlice

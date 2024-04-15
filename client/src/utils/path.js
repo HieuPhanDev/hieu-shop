@@ -11,5 +11,8 @@ const path = {
   USERLIST: 'userlist',
   CATEGORYLIST: 'categorylist',
   PRODUCTLIST: 'productlist',
+  DASHBOARD: '/admin/dashboard',
+  FORGOTPASSWORD: '/forgot',
+  RESETPASSWORD: '/reset/:token',
 }
 export default path
