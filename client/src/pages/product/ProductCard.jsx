@@ -29,8 +29,9 @@ const ProductCard = ({ p }) => {
 
       <div className="p-5">
         <div className="">
-          <h5 className="mb-2 text-xl text-whiet dark:text-white line-clamp-1">{p?.name}</h5>
-
+          <Link to={`/product/${p._id}`}>
+            <h5 className="mb-2 text-xl text-whiet dark:text-white line-clamp-1">{p?.name}</h5>
+          </Link>
           <p className="text-black font-semibold text-pink-500">
             {p?.price?.toLocaleString('it-IT', { style: 'currency', currency: 'VND' })}
           </p>
