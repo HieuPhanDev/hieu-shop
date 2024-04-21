@@ -4,8 +4,10 @@ const bcrypt = require('bcrypt')
 const generateToken = require('../utils/createToken')
 const sendEmail = require('../utils/senEmail')
 const crypto = require('crypto')
+const jwt = require('jsonwebtoken')
 
 module.exports.createUser = asyncHandler(async (req, res) => {
+  console.log(req.body)
   const { name, email, password } = req.body
   if (!name || !email || !password) {
     throw new Error('Please fill all fields!')
@@ -16,13 +18,10 @@ module.exports.createUser = asyncHandler(async (req, res) => {
   }
   const hashedPassword = await bcrypt.hash(req.body.password, 10)
   const user = await User.create({ name, email, password: hashedPassword })
-  generateToken(res, user._id)
+  // generateToken(res, user._id)
   res.status(201).json({
-    success: true,
-    _id: user._id,
-    name: user.name,
-    email: user.email,
-    isAdmin: user.isAdmin,
+    message: 'Account Created Successfully !',
+    data: user,
   })
 })
 
@@ -39,13 +38,21 @@ module.exports.loginUser = asyncHandler(async (req, res) => {
   if (!isMatch) {
     throw new Error('Username or password is incorrect!')
   }
-  generateToken(res, user._id)
-  res.status(200).json({
-    success: true,
-    _id: user._id,
+  const { accessToken, refreshToken } = generateToken({
     name: user.name,
+    id: user._id,
     email: user.email,
-    isAdmin: user.isAdmin,
+  })
+  await User.updateOne({ _id: user._id }, { $push: { refreshToken } })
+  res.cookie('refreshToken', refreshToken, {
+    maxAge: process.env.JWT_COOKIE_EXPIRY_TIME * 1000,
+    secure: true,
+    httpOnly: true,
+    sameSite: 'none',
+  })
+  return res.status(200).send({
+    accessToken: accessToken,
+    message: 'Logged In Successfully !',
   })
 })
 
@@ -97,11 +104,67 @@ module.exports.resetPassword = asyncHandler(async (req, res) => {
   })
 })
 
-module.exports.logoutUser = asyncHandler(async (req, res) => {
-  res.clearCookie('jwt')
-  res.status(200).json({ success: true })
+module.exports.logoutUser = asyncHandler(async (req, res, next) => {
+  try {
+    res.clearCookie('refreshToken')
+    const { refreshToken } = req.cookies
+    if (!refreshToken) {
+      throw new Error('No refreshToken found in cookie')
+    }
+    const decodedUser = jwt.decode(refreshToken, process.env.JWT_SECRET_REFRESH_TOKEN)
+    console.log('DECODED USER ====> logOut ', decodedUser)
+    const isHacker = await refreshTokenReuseDetection(decodedUser, refreshToken, res, next)
+    if (isHacker) {
+      console.log('This user has been hacked, returning ===> ')
+      return
+    }
+    await User.updateOne({ _id: decodedUser.id }, { $pull: { refreshToken: refreshToken } })
+    return res.sendStatus(204)
+  } catch (error) {
+    await handleRefreshTokenError(error, req, res, next)
+  }
 })
-
+module.exports.refreshToken = asyncHandler(async (req, res, next) => {
+  try {
+    const { refreshToken } = req.cookies
+    if (!refreshToken) {
+      res.clearCookie('refreshToken')
+      throw new Error('No refreshToken found in cookie')
+    }
+    const decodedUser = extractUser(refreshToken, process.env.JWT_SECRET_REFRESH_TOKEN)
+    req.user = decodedUser
+    console.log('DECODED USER ====> refreshTokenSets ', req.user)
+    const isHacker = await refreshTokenReuseDetection(decodedUser, refreshToken, res, next)
+    if (isHacker) {
+      console.log('This user has been hacked, returning ===> ')
+      return
+    }
+    const tokenSet = generateToken({
+      name: decodedUser.name,
+      id: decodedUser.id,
+      email: decodedUser.email,
+    })
+    const updatedRefreshToken = await userModel.updateOne(
+      { _id: decodedUser.id, refreshToken: refreshToken },
+      { $set: { 'refreshToken.$': tokenSet.refreshToken } }
+    )
+    if (updatedRefreshToken) {
+      console.log('updatedRefreshToken ====> replaceRefreshTokenUser ===>  ', updatedRefreshToken)
+      res.cookie('refreshToken', tokenSet.refreshToken, {
+        maxAge: process.env.JWT_COOKIE_EXPIRY_TIME * 1000,
+        secure: true,
+        httpOnly: true, // The cookie only accessible by the web server,
+        sameSite: 'none',
+      })
+      return res.status(200).send({
+        accessToken: tokenSet.accessToken,
+      })
+    }
+  } catch (error) {
+    console.log('refreshTokenSets ===> ', error)
+    await handleRefreshTokenError(error, req, res, next)
+  }
+})
 module.exports.getAllUsers = asyncHandler(async (req, res) => {
   const users = await User.find({})
   res.status(200).json(users)
