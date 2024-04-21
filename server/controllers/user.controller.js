@@ -5,9 +5,9 @@ const generateToken = require('../utils/createToken')
 const sendEmail = require('../utils/senEmail')
 const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
+const { generateRefreshToken, generateAccessToken } = require('../utils/jwt')
 
 module.exports.createUser = asyncHandler(async (req, res) => {
-  console.log(req.body)
   const { name, email, password } = req.body
   if (!name || !email || !password) {
     throw new Error('Please fill all fields!')
@@ -16,16 +16,35 @@ module.exports.createUser = asyncHandler(async (req, res) => {
   if (userExists) {
     throw new Error('User already exists!')
   }
-  const hashedPassword = await bcrypt.hash(req.body.password, 10)
-  const user = await User.create({ name, email, password: hashedPassword })
-  // generateToken(res, user._id)
-  res.status(201).json({
-    message: 'Account Created Successfully !',
-    data: user,
+  const token = jwt.sign({ email, name, password }, process.env.JWT_SECRET, {
+    expiresIn: '15m',
   })
+  const confirmationLink = `${process.env.SERVER_URL}api/user/confirm/${token}`
+  console.log(confirmationLink)
+  const html = `Xin vui lòng click vào link dưới đây để xác nhận. Link này sẽ hết hạn sau 15 phút kể từ bây giờ. <a href="${confirmationLink}">Click here</a>`
+  const data = {
+    email,
+    html,
+    subject: `Reset password Hieu-Shop`,
+  }
+  await sendEmail(data)
+  return res
+    .status(201)
+    .json({ success: true, mes: 'Registration successful. Please check your email for confirmation.' })
 })
-
+module.exports.confirm = asyncHandler(async (req, res) => {
+  const { token } = req.params
+  try {
+    const decoded = await jwt.verify(token, process.env.JWT_SECRET)
+    const { email, password, name } = decoded
+    const user = await User.create({ name, email, password })
+    res.status(201).json({ success: true, mes: 'Registration successful', data: user })
+  } catch (error) {
+    throw new Error('Token hết hạn hoặc không hợp lệ')
+  }
+})
 module.exports.loginUser = asyncHandler(async (req, res) => {
+  const cookies = req.cookies
   const { email, password } = req.body
   if (!email || !password) {
     throw new Error('Please fill all fields!')
@@ -38,21 +57,15 @@ module.exports.loginUser = asyncHandler(async (req, res) => {
   if (!isMatch) {
     throw new Error('Username or password is incorrect!')
   }
-  const { accessToken, refreshToken } = generateToken({
-    name: user.name,
-    id: user._id,
-    email: user.email,
-  })
-  await User.updateOne({ _id: user._id }, { $push: { refreshToken } })
-  res.cookie('refreshToken', refreshToken, {
-    maxAge: process.env.JWT_COOKIE_EXPIRY_TIME * 1000,
-    secure: true,
-    httpOnly: true,
-    sameSite: 'none',
-  })
-  return res.status(200).send({
-    accessToken: accessToken,
-    message: 'Logged In Successfully !',
+  const { pass, role, refreshToken, ...userData } = user.toObject()
+  const accessToken = generateAccessToken(user._id, role)
+  const newRefreshToken = generateRefreshToken(user._id)
+  await User.findByIdAndUpdate(user._id, { refreshToken: newRefreshToken }, { new: true })
+  res.cookie('refreshToken', newRefreshToken, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 })
+  return res.status(200).json({
+    success: true,
+    accessToken,
+    mes: userData,
   })
 })
 
@@ -61,7 +74,7 @@ module.exports.forgotPassword = asyncHandler(async (req, res) => {
   if (!user) {
     throw new Error('Email không tồn tại!')
   }
-  const resetToken = user.getResetPasswordToken()
+  const resetToken = user.getCreateToken()
   await user.save({ validateBeforeSave: false })
   const resetPasswordUrl = `${process.env.CLIENT_URL}/reset/${resetToken}`
   const html = `Link reset password của bạn là :<br/><br/> <a href=${resetPasswordUrl}>Click here</a> <br/><br/>Nếu bạn không yêu cầu reset password, hãy bỏ qua email này.`

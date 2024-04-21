@@ -8,6 +8,7 @@ router
   .route('/')
   .post(registerValid, Validation, userController.createUser)
   .get(authenticate, authorizeAdmin, userController.getAllUsers)
+router.get('/confirm/:token', userController.confirm)
 router.post('/auth', loginValid, Validation, userController.loginUser)
 router.post('/logout', userController.logoutUser)
 router.route('/password/forgot').post(userController.forgotPassword)

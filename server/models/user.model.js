@@ -16,16 +16,19 @@ var userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    isAdmin: {
-      type: Boolean,
-      default: false,
+    role: {
+      type: String,
+      enum: ['Admin', 'User'],
+      default: 'User',
     },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
+    registerToken: String,
+    registerTokenExpire: Date,
   },
   { timestamps: true }
 )
-userSchema.methods.getResetPasswordToken = function () {
+userSchema.methods.getCreateToken = function () {
   const resetToken = crypto.randomBytes(20).toString('hex')
   this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex')
   this.resetPasswordExpire = Date.now() + 15 * 60 * 1000
