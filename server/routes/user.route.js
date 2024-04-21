@@ -2,7 +2,13 @@ const express = require('express')
 const router = express.Router()
 const userController = require('../controllers/user.controller')
 const { authenticate, authorizeAdmin } = require('../middlewares/authMiddleware')
-const { Validation, loginValid, registerValid } = require('../middlewares/validate')
+const {
+  Validation,
+  loginValid,
+  registerValid,
+  resetPasswordValid,
+  forgotPasswordValid,
+} = require('../middlewares/validate')
 
 router
   .route('/')
@@ -10,9 +16,10 @@ router
   .get(authenticate, authorizeAdmin, userController.getAllUsers)
 router.get('/confirm/:token', userController.confirm)
 router.post('/auth', loginValid, Validation, userController.loginUser)
+router.post('/refresh', userController.refreshToken)
 router.post('/logout', userController.logoutUser)
-router.route('/password/forgot').post(userController.forgotPassword)
-router.route('/password/reset/:token').put(userController.resetPassword)
+router.route('/password/forgot').post(forgotPasswordValid, Validation, userController.forgotPassword)
+router.route('/password/reset/:token').put(resetPasswordValid, Validation, userController.resetPassword)
 
 router
   .route('/profile')

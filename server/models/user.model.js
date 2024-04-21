@@ -25,6 +25,7 @@ var userSchema = new mongoose.Schema(
     resetPasswordExpire: Date,
     registerToken: String,
     registerTokenExpire: Date,
+    refreshToken: String,
   },
   { timestamps: true }
 )

@@ -44,18 +44,17 @@ module.exports.confirm = asyncHandler(async (req, res) => {
   }
 })
 module.exports.loginUser = asyncHandler(async (req, res) => {
-  const cookies = req.cookies
   const { email, password } = req.body
   if (!email || !password) {
     throw new Error('Please fill all fields!')
   }
   const user = await User.findOne({ email })
   if (!user) {
-    throw new Error('Username or password is incorrect!')
+    throw new Error('Email or password is incorrect!')
   }
   const isMatch = await bcrypt.compare(password, user.password)
   if (!isMatch) {
-    throw new Error('Username or password is incorrect!')
+    throw new Error('Email or password is incorrect!')
   }
   const { pass, role, refreshToken, ...userData } = user.toObject()
   const accessToken = generateAccessToken(user._id, role)
@@ -65,7 +64,7 @@ module.exports.loginUser = asyncHandler(async (req, res) => {
   return res.status(200).json({
     success: true,
     accessToken,
-    mes: userData,
+    userData,
   })
 })
 
@@ -118,66 +117,32 @@ module.exports.resetPassword = asyncHandler(async (req, res) => {
 })
 
 module.exports.logoutUser = asyncHandler(async (req, res, next) => {
-  try {
-    res.clearCookie('refreshToken')
-    const { refreshToken } = req.cookies
-    if (!refreshToken) {
-      throw new Error('No refreshToken found in cookie')
-    }
-    const decodedUser = jwt.decode(refreshToken, process.env.JWT_SECRET_REFRESH_TOKEN)
-    console.log('DECODED USER ====> logOut ', decodedUser)
-    const isHacker = await refreshTokenReuseDetection(decodedUser, refreshToken, res, next)
-    if (isHacker) {
-      console.log('This user has been hacked, returning ===> ')
-      return
-    }
-    await User.updateOne({ _id: decodedUser.id }, { $pull: { refreshToken: refreshToken } })
-    return res.sendStatus(204)
-  } catch (error) {
-    await handleRefreshTokenError(error, req, res, next)
-  }
+  const cookie = req.cookies
+  if (!cookie && !cookie.refreshToken) throw new Error('No refresh token in cookies')
+  // Xóa refresh token ở db
+  await User.findOneAndUpdate({ refreshToken: cookie.refreshToken }, { refreshToken: '' }, { new: true })
+  // Xóa refresh token ở cookie trình duyệt
+  res.clearCookie('refreshToken')
+  return res.status(200).json({
+    success: true,
+    message: 'Logout success!',
+  })
 })
-module.exports.refreshToken = asyncHandler(async (req, res, next) => {
-  try {
-    const { refreshToken } = req.cookies
-    if (!refreshToken) {
-      res.clearCookie('refreshToken')
-      throw new Error('No refreshToken found in cookie')
-    }
-    const decodedUser = extractUser(refreshToken, process.env.JWT_SECRET_REFRESH_TOKEN)
-    req.user = decodedUser
-    console.log('DECODED USER ====> refreshTokenSets ', req.user)
-    const isHacker = await refreshTokenReuseDetection(decodedUser, refreshToken, res, next)
-    if (isHacker) {
-      console.log('This user has been hacked, returning ===> ')
-      return
-    }
-    const tokenSet = generateToken({
-      name: decodedUser.name,
-      id: decodedUser.id,
-      email: decodedUser.email,
-    })
-    const updatedRefreshToken = await userModel.updateOne(
-      { _id: decodedUser.id, refreshToken: refreshToken },
-      { $set: { 'refreshToken.$': tokenSet.refreshToken } }
-    )
-    if (updatedRefreshToken) {
-      console.log('updatedRefreshToken ====> replaceRefreshTokenUser ===>  ', updatedRefreshToken)
-      res.cookie('refreshToken', tokenSet.refreshToken, {
-        maxAge: process.env.JWT_COOKIE_EXPIRY_TIME * 1000,
-        secure: true,
-        httpOnly: true, // The cookie only accessible by the web server,
-        sameSite: 'none',
-      })
-      return res.status(200).send({
-        accessToken: tokenSet.accessToken,
-      })
-    }
-  } catch (error) {
-    console.log('refreshTokenSets ===> ', error)
-    await handleRefreshTokenError(error, req, res, next)
-  }
+module.exports.refreshToken = asyncHandler(async (req, res) => {
+  // Lấy token từ cookies
+  const cookie = req.cookies
+  // Check xem có token hay không
+  console.log(cookie)
+  if (Object.keys(cookie).length === 0 && !cookie.refreshToken) throw new Error('No refresh token in cookies')
+  // Check token có hợp lệ hay không
+  const rs = await jwt.verify(cookie.refreshToken, process.env.JWT_SECRET)
+  const response = await User.findOne({ _id: rs._id, refreshToken: cookie.refreshToken })
+  return res.status(200).json({
+    success: response ? true : false,
+    newAccessToken: response ? generateAccessToken(response._id, response.role) : 'Refresh token not matched',
+  })
 })
+
 module.exports.getAllUsers = asyncHandler(async (req, res) => {
   const users = await User.find({})
   res.status(200).json(users)

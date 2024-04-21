@@ -2,20 +2,20 @@ const { check } = require('express-validator')
 const { validationResult } = require('express-validator')
 
 exports.registerValid = [
-  check('name').not().isEmpty().withMessage('Name is required'),
-  check('email').isEmail().withMessage('Must be a valid email address'),
-  check('password').isLength({ min: 4 }).withMessage('Password must be at least  4 characters long'),
+  check('name').not().isEmpty().withMessage('Tên không được để trống'),
+  check('email').isEmail().withMessage('Email không hợp lệ'),
+  check('password').isLength({ min: 4 }).withMessage('Mật khẩu phải có ít nhất 4 ký tự'),
 ]
 
 exports.loginValid = [
-  check('email').isEmail().withMessage('Must be a valid email address'),
-  check('password').isLength({ min: 4 }).withMessage('Password must be at least  4 characters long'),
+  check('email').isEmail().withMessage('Email không hợp lệ'),
+  check('password').isLength({ min: 4 }).withMessage('Mật khẩu phải có ít nhất 4 ký tự'),
 ]
 
-exports.forgotPasswordValid = [check('email').not().isEmpty().isEmail().withMessage('Must be a valid email address')]
+exports.forgotPasswordValid = [check('email').not().isEmpty().isEmail().withMessage('Email không hợp lệ')]
 
 exports.resetPasswordValid = [
-  check('newPassword').not().isEmpty().isLength({ min: 4 }).withMessage('Password must be at least  4 characters long'),
+  check('password').not().isEmpty().isLength({ min: 4 }).withMessage('Mật khẩu phải có ít nhất 4 ký tự'),
 ]
 
 exports.Validation = (req, res, next) => {
