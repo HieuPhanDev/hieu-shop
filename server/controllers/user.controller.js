@@ -6,6 +6,7 @@ const sendEmail = require('../utils/senEmail')
 const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
 const { generateRefreshToken, generateAccessToken } = require('../utils/jwt')
+const { userInfo } = require('os')
 
 module.exports.createUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body
@@ -16,11 +17,12 @@ module.exports.createUser = asyncHandler(async (req, res) => {
   if (userExists) {
     throw new Error('User already exists!')
   }
-  const token = jwt.sign({ email, name, password }, process.env.JWT_SECRET, {
+  const salt = await bcrypt.genSalt()
+  const hashPassword = await bcrypt.hash(password, salt)
+  const token = jwt.sign({ email, name, password: hashPassword }, process.env.JWT_SECRET, {
     expiresIn: '15m',
   })
   const confirmationLink = `${process.env.SERVER_URL}api/user/confirm/${token}`
-  console.log(confirmationLink)
   const html = `Xin vui lòng click vào link dưới đây để xác nhận. Link này sẽ hết hạn sau 15 phút kể từ bây giờ. <a href="${confirmationLink}">Click here</a>`
   const data = {
     email,
@@ -34,13 +36,18 @@ module.exports.createUser = asyncHandler(async (req, res) => {
 })
 module.exports.confirm = asyncHandler(async (req, res) => {
   const { token } = req.params
+  console.log(req.body)
   try {
     const decoded = await jwt.verify(token, process.env.JWT_SECRET)
     const { email, password, name } = decoded
     const user = await User.create({ name, email, password })
-    res.status(201).json({ success: true, mes: 'Registration successful', data: user })
+    if (user) {
+      return res.redirect(process.env.CLIENT_URL + '/login/success')
+    } else {
+      return res.redirect(process.env.CLIENT_URL + '/login/fail')
+    }
   } catch (error) {
-    throw new Error('Token hết hạn hoặc không hợp lệ')
+    return res.redirect(process.env.CLIENT_URL + '/login/fail')
   }
 })
 module.exports.loginUser = asyncHandler(async (req, res) => {

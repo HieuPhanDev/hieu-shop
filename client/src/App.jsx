@@ -20,7 +20,9 @@ import Cart from './pages/Cart'
 import Shop from './pages/Shop'
 import ForgotPassword from './pages/auth/ForgotPassword'
 import ResetPassword from './pages/auth/ResetPassword'
-
+import Shipping from './pages/order/Shipping'
+import PlaceOrder from './pages/order/PlaceOrder'
+import Order from './pages/order/Order'
 function App() {
   return (
     <div>
@@ -38,6 +40,9 @@ function App() {
           <Route path="/product/:id" element={<ProductDetails />} />
           <Route path="" element={<Private />}>
             <Route path={path.PROFILE} element={<Profile />} />
+            <Route path="/shipping" element={<Shipping />} />
+            <Route path="/placeorder" element={<PlaceOrder />} />
+            <Route path="/order/:id" element={<Order />} />
           </Route>
           <Route path={path.ADMIN} element={<AdminRoute />}>
             <Route path={path.USERLIST} element={<UserList />} />

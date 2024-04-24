@@ -4,10 +4,13 @@ import './index.css'
 import { BrowserRouter } from 'react-router-dom'
 import { Provider } from 'react-redux'
 import { store } from './redux/store'
+import { PayPalScriptProvider } from '@paypal/react-paypal-js'
 ReactDOM.createRoot(document.getElementById('root')).render(
   <Provider store={store}>
     <BrowserRouter>
-      <App />
+      <PayPalScriptProvider>
+        <App />
+      </PayPalScriptProvider>
     </BrowserRouter>
   </Provider>
 )

@@ -16,7 +16,7 @@ router
   .get(authenticate, authorizeAdmin, userController.getAllUsers)
 router.get('/confirm/:token', userController.confirm)
 router.post('/auth', loginValid, Validation, userController.loginUser)
-router.post('/refresh', userController.refreshToken)
+router.get('/refresh', userController.refreshToken)
 router.post('/logout', userController.logoutUser)
 router.route('/password/forgot').post(forgotPasswordValid, Validation, userController.forgotPassword)
 router.route('/password/reset/:token').put(resetPasswordValid, Validation, userController.resetPassword)

@@ -16,7 +16,6 @@ const DisplayingError = Yup.object().shape({
   confirmPassword: Yup.string().oneOf([Yup.ref('password'), null], 'Password không khớp!'),
 })
 const Register = () => {
-  const dispatch = useDispatch()
   const navigate = useNavigate()
   const [register, { isLoading }] = useRegisterMutation()
   const { userInfo } = useSelector((state) => state.auth)
@@ -26,12 +25,13 @@ const Register = () => {
     }
   }, [navigate, userInfo])
 
-  const handleSubmit = async (values) => {
+  const handleSubmit = async (values, resetForm) => {
     try {
       const res = await register({ name: values.name, email: values.email, password: values.password }).unwrap()
-      dispatch(setCredentials({ ...res }))
-      toast.success('Đăng ký thành công!')
-      navigate('/')
+      if (res.success) {
+        toast.success('Vui lòng kiểm tra email của bạn để xác nhận tài khoản!')
+        resetForm()
+      }
     } catch (err) {
       console.log(err)
       toast.error(err.data.message)
@@ -49,7 +49,9 @@ const Register = () => {
           confirmPassword: '',
         }}
         validationSchema={DisplayingError}
-        onSubmit={(values) => handleSubmit(values)}
+        onSubmit={(values, { resetForm }) => {
+          handleSubmit(values, resetForm)
+        }}
       >
         {({ errors, touched }) => (
           <Form className="container w-[40rem]">

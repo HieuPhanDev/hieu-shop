@@ -9,7 +9,7 @@ const Cart = () => {
 
   const cart = useSelector((state) => state.cart)
   const { cartItems } = cart
-
+  const { userInfo } = useSelector((state) => state.auth)
   const addToCartHandler = (product, qty) => {
     dispatch(addToCart({ ...product, qty }))
   }
@@ -19,7 +19,11 @@ const Cart = () => {
   }
 
   const checkoutHandler = () => {
-    navigate('/login?redirect=/shipping')
+    if (!userInfo) {
+      navigate('/login')
+      return
+    }
+    navigate('/shipping')
   }
 
   return (

@@ -1,7 +1,9 @@
 import { createSlice } from '@reduxjs/toolkit'
 
 const initialState = {
-  userInfo: localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')) : null,
+  isLogged: localStorage.getItem('isLogged') === 'true' || false,
+  token: localStorage.getItem('token') || '',
+  userInfo: JSON.parse(localStorage.getItem('userInfo')) || null,
 }
 
 const authSlice = createSlice({
@@ -9,13 +11,17 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     setCredentials: (state, action) => {
-      state.userInfo = action.payload
-      localStorage.setItem('userInfo', JSON.stringify(action.payload))
-      const expirationTime = new Date().getTime() + 30 * 24 * 60 * 60 * 1000 // 30 days
-      localStorage.setItem('expirationTime', expirationTime)
+      state.isLogged = true
+      state.token = action.payload.token
+      state.userData = action.payload.userData
+      localStorage.setItem('isLogged', 'true')
+      localStorage.setItem('token', action.payload.token)
+      localStorage.setItem('userInfo', JSON.stringify(action.payload.userInfo))
     },
     logout: (state) => {
+      state.isLogged = false
       state.userInfo = null
+      state.token = ''
       localStorage.clear()
     },
   },

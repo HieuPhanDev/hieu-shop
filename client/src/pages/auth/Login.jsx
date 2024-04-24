@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import Loader from '../../components/Loader'
 import { useLoginMutation } from '../../redux/api/userApiSlice'
-import { setCredentials } from '../../redux/features/auth/authSlice'
 import { toast } from 'react-toastify'
 import { useDispatch, useSelector } from 'react-redux'
 import path from '../../utils/path'
 import { Formik, Form, Field } from 'formik'
 import * as Yup from 'yup'
+import { setCredentials } from '../../redux/features/auth/authSlice'
 
 const DisplayingError = Yup.object().shape({
   email: Yup.string().email('Email không đúng định dạng').required('Email không được để trống!'),
@@ -19,16 +19,17 @@ const Login = () => {
   const navigate = useNavigate()
 
   const [login, { isLoading }] = useLoginMutation()
-  const { userInfo } = useSelector((state) => state.auth)
+  const { isLogged } = useSelector((state) => state.auth)
   useEffect(() => {
-    if (userInfo) {
+    if (isLogged) {
       navigate('/')
     }
-  }, [navigate, userInfo])
+  }, [navigate, isLogged])
   const handleSubmit = async (values) => {
     try {
       const res = await login(values).unwrap()
-      dispatch(setCredentials({ ...res }))
+      console.log(res)
+      dispatch(setCredentials({ token: res.accessToken, userInfo: res.userData, isLogged: true }))
       setTimeout(() => {
         toast.success('Đăng nhập thành công')
       }, 100)
