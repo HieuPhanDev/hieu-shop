@@ -1,9 +1,7 @@
-import { BASE_URL, PRODUCT_URL, UPLOAD_URL } from '../constants'
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import { PRODUCT_URL, UPLOAD_URL } from '../constants'
+import { apiSlice } from './apiSlice'
 
-export const productApiSlice = createApi({
-  reducerPath: 'productApiSlice',
-  baseQuery: fetchBaseQuery({ baseUrl: BASE_URL, credentials: 'include' }),
+export const productApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     createProduct: builder.mutation({
       query: (data) => ({ url: `${PRODUCT_URL}/`, method: 'POST', body: data }),

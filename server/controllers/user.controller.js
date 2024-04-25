@@ -126,9 +126,7 @@ module.exports.resetPassword = asyncHandler(async (req, res) => {
 module.exports.logoutUser = asyncHandler(async (req, res, next) => {
   const cookie = req.cookies
   if (!cookie && !cookie.refreshToken) throw new Error('No refresh token in cookies')
-  // Xóa refresh token ở db
   await User.findOneAndUpdate({ refreshToken: cookie.refreshToken }, { refreshToken: '' }, { new: true })
-  // Xóa refresh token ở cookie trình duyệt
   res.clearCookie('refreshToken')
   return res.status(200).json({
     success: true,
@@ -136,12 +134,8 @@ module.exports.logoutUser = asyncHandler(async (req, res, next) => {
   })
 })
 module.exports.refreshToken = asyncHandler(async (req, res) => {
-  // Lấy token từ cookies
   const cookie = req.cookies
-  // Check xem có token hay không
-  console.log(cookie)
   if (Object.keys(cookie).length === 0 && !cookie.refreshToken) throw new Error('No refresh token in cookies')
-  // Check token có hợp lệ hay không
   const rs = await jwt.verify(cookie.refreshToken, process.env.JWT_SECRET)
   const response = await User.findOne({ _id: rs._id, refreshToken: cookie.refreshToken })
   return res.status(200).json({
@@ -190,7 +184,6 @@ module.exports.deleteUserById = asyncHandler(async (req, res) => {
       res.status(400)
       throw new Error('Cannot delete admin user')
     }
-
     await User.deleteOne({ _id: user._id })
     res.json({ message: 'User removed' })
   } else {
@@ -215,9 +208,7 @@ module.exports.updateUserById = asyncHandler(async (req, res) => {
     user.name = req.body.name || user.name
     user.email = req.body.email || user.email
     user.isAdmin = Boolean(req.body.isAdmin)
-
     const updatedUser = await user.save()
-
     res.json({
       _id: updatedUser._id,
       name: updatedUser.name,

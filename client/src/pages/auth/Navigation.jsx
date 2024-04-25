@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   AiOutlineHome,
@@ -19,12 +19,14 @@ function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1)
 }
 const Navigation = () => {
+  const { isLogged } = useSelector((state) => state.auth)
   const { userInfo } = useSelector((state) => state.auth)
   const { cartItems } = useSelector((state) => state.cart)
   const [show, setShow] = useState(false)
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const [logoutApiCall] = useLogoutMutation()
+  useEffect(() => {}, [isLogged])
   const logoutHandler = async () => {
     try {
       await logoutApiCall().unwrap()

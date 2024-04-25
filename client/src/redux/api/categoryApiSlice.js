@@ -1,9 +1,7 @@
-import { BASE_URL, CATEGORIES_URL } from '../constants'
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import { CATEGORIES_URL } from '../constants'
+import { apiSlice } from './apiSlice'
 
-export const categoryApiSlice = createApi({
-  reducerPath: 'categoryApiSlice',
-  baseQuery: fetchBaseQuery({ baseUrl: BASE_URL, credentials: 'include' }),
+export const categoryApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     createCategory: builder.mutation({
       query: (data) => ({ url: `${CATEGORIES_URL}/`, method: 'POST', body: data }),

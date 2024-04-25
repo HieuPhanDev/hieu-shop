@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import Loader from '../../components/Loader'
 import { useLoginMutation } from '../../redux/api/userApiSlice'
 import { toast } from 'react-toastify'
@@ -17,19 +17,17 @@ const DisplayingError = Yup.object().shape({
 const Login = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
-
   const [login, { isLoading }] = useLoginMutation()
-  const { isLogged } = useSelector((state) => state.auth)
+  const { userInfo } = useSelector((state) => state.auth)
   useEffect(() => {
-    if (isLogged) {
+    if (userInfo) {
       navigate('/')
     }
-  }, [navigate, isLogged])
+  }, [navigate, userInfo])
   const handleSubmit = async (values) => {
     try {
       const res = await login(values).unwrap()
-      console.log(res)
-      dispatch(setCredentials({ token: res.accessToken, userInfo: res.userData, isLogged: true }))
+      dispatch(setCredentials({ token: res.accessToken, userInfo: res.userData }))
       setTimeout(() => {
         toast.success('Đăng nhập thành công')
       }, 100)

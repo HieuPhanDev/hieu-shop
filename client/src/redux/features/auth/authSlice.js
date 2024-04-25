@@ -3,7 +3,7 @@ import { createSlice } from '@reduxjs/toolkit'
 const initialState = {
   isLogged: localStorage.getItem('isLogged') === 'true' || false,
   token: localStorage.getItem('token') || '',
-  userInfo: JSON.parse(localStorage.getItem('userInfo')) || null,
+  userInfo: localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')) : null,
 }
 
 const authSlice = createSlice({
@@ -13,10 +13,10 @@ const authSlice = createSlice({
     setCredentials: (state, action) => {
       state.isLogged = true
       state.token = action.payload.token
-      state.userData = action.payload.userData
+      state.userInfo = action.payload.userInfo
+      localStorage.setItem('userInfo', JSON.stringify(action.payload.userInfo))
       localStorage.setItem('isLogged', 'true')
       localStorage.setItem('token', action.payload.token)
-      localStorage.setItem('userInfo', JSON.stringify(action.payload.userInfo))
     },
     logout: (state) => {
       state.isLogged = false
