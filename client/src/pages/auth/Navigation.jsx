@@ -96,7 +96,7 @@ const Navigation = () => {
           )}
           {show && userInfo && (
             <div className="absolute flex flex-col border rounded-md p-4 bg-stone-900 border-slate-200 left-1/2 transform -translate-x-1/2 w-[150px]">
-              {userInfo.isAdmin && (
+              {userInfo.role === 'Admin' && (
                 <>
                   <Link
                     to={path.DASHBOARD}

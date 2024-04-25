@@ -23,6 +23,9 @@ import ResetPassword from './pages/auth/ResetPassword'
 import Shipping from './pages/order/Shipping'
 import PlaceOrder from './pages/order/PlaceOrder'
 import Order from './pages/order/Order'
+import UserOrder from './pages/user/UserOrder'
+import OrderList from './pages/admin/OrderList'
+import AdminDashboard from './pages/admin/AdminDashboard'
 function App() {
   return (
     <div>
@@ -43,6 +46,7 @@ function App() {
             <Route path="/shipping" element={<Shipping />} />
             <Route path="/placeorder" element={<PlaceOrder />} />
             <Route path="/order/:id" element={<Order />} />
+            <Route path="/user-orders" element={<UserOrder />} />
           </Route>
           <Route path={path.ADMIN} element={<AdminRoute />}>
             <Route path={path.USERLIST} element={<UserList />} />
@@ -50,6 +54,8 @@ function App() {
             <Route path={path.PRODUCTLIST} element={<ProductList />} />
             <Route path="allproductslist" element={<AllProducts />} />
             <Route path="product/update/:_id" element={<ProductUpdate />} />
+            <Route path="orderlist" element={<OrderList />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
           </Route>
         </Route>
       </Routes>
