@@ -62,17 +62,18 @@ module.exports.loginUser = asyncHandler(async (req, res) => {
   const isMatch = await bcrypt.compare(password, user.password)
   if (!isMatch) {
     throw new Error('Email or password is incorrect!')
+  } else {
+    const { password, refreshToken, ...userData } = user.toObject()
+    const accessToken = generateAccessToken(user._id, user.role)
+    const newRefreshToken = generateRefreshToken(user._id)
+    await User.findByIdAndUpdate(user._id, { refreshToken: newRefreshToken }, { new: true })
+    res.cookie('refreshToken', newRefreshToken, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 })
+    return res.status(200).json({
+      success: true,
+      accessToken,
+      userData,
+    })
   }
-  const { pass, role, refreshToken, ...userData } = user.toObject()
-  const accessToken = generateAccessToken(user._id, role)
-  const newRefreshToken = generateRefreshToken(user._id)
-  await User.findByIdAndUpdate(user._id, { refreshToken: newRefreshToken }, { new: true })
-  res.cookie('refreshToken', newRefreshToken, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 })
-  return res.status(200).json({
-    success: true,
-    accessToken,
-    userData,
-  })
 })
 
 module.exports.forgotPassword = asyncHandler(async (req, res) => {
